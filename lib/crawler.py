@@ -34,8 +34,10 @@ class Crawler:
 	
 	def get(self, url):
 		try:
-			res = self.session.get(url)
-			if self.signature.check(res):
+			res = self.session.get(url, allow_redirects=False)
+			if res.status_code == 302:
+				logger.warning("%d %s -> %s" % (res.status_code, url, res.headers.get("Location")))
+			elif self.signature.check(res):
 				logger.info("%d %s" % (res.status_code, url))
 		except Exception as e:
 			logger.error(repr(e))
