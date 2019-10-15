@@ -36,34 +36,29 @@ class Signature:
 		self.filter.append(filter_function)
 	
 	def check(self, page):
+		page = [page]
 		for f in self.filter:
-			if not f(page):
-				return False
-		return True
-
-class DefaultGoodSignature(Signature):
-	def __init__(self):
-		super().__init__()
-		self.add(lambda x: x.status_code in [200, 302])
-	
-class DefaultBadSignature(Signature):
-	def __init__(self):
-		super().__init__()
-		self.add(lambda x: x.status_code in [401, 403, 404, 500, 501, 502, 503])
+			page = filter(f, page)
+		return len(list(page)) > 0
 
 if __name__ == "__main__":
 	# example code
 	import requests as req
 	url = 'https://www.google.com.tw/'
-	good_sig = DefaultGoodSignature()
-	bad_sig = DefaultBadSignature()
-	bad_sig.add(lambda x: "an error" in x.text)
+	signature = Signature(status_code=200, not_contain="an error")
 
 	page1 = req.get(url)
 	page2 = req.get(url+"not_exists")
 
-	print("Page 1 with good signature? " + ("Y" if good_sig.check(page1) else "N"))
-	print("Page 1 with bad signature? " + ("Y" if bad_sig.check(page1) else "N"))
-	print("Page 2 with good signature? " + ("Y" if good_sig.check(page2) else "N"))
-	print("Page 2 with bad signature? " + ("Y" if bad_sig.check(page2) else "N"))
+	print("Page 1 is valid? " + ("Y" if signature.check(page1) else "N"))
+	print("Page 2 is valid? " + ("Y" if signature.check(page2) else "N"))
 
+	url = 'https://www.youtube.com'
+
+	page1 = req.get(url)
+	page2 = req.get(url+"/robots.txt")
+	page3 = req.get(url+"/not_exists")
+
+	print("Page 1 is valid? " + ("Y" if signature.check(page1) else "N"))
+	print("Page 2 is valid? " + ("Y" if signature.check(page2) else "N"))
+	print("Page 3 is valid? " + ("Y" if signature.check(page3) else "N"))
